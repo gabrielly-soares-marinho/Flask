@@ -2,27 +2,56 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-produtos = [
-    {"id": 1, "nome": "Caneta", "preco": 2.5},
-    {"id": 2, "nome": "Caderno", "preco": 15.0}
-]
+users = []
+current_id = 1
 
 
-@app.route('/')
-def home():
-    return "Olá! Flask está funcionando."
+@app.route("/users", methods=["POST"])
+def create_user():
+    global current_id
+
+    user = {
+        "id": current_id,
+        "nome": "Gabrielly",
+        "email": "gabrielly.soares05marinho@gmail.com"
+    }
+    users.append(user)
+    current_id += 1
+    return jsonify(user), 201
+
+@app.route("/users", methods=["GET"])
+def get_users():
+    return jsonify(users), 200
+
+@app.route("/users/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    for user in users:
+        if user["id"] == user_id:
+            return jsonify(user), 200
+    return jsonify({"error": "Usuário não encontrado"}), 404
 
 
-@app.route('/produtos', methods=['GET'])
-def listar_produtos():
-    return jsonify(produtos)
+@app.route("/users/<int:user_id>", methods=["PUT"])
+def update_user(user_id):
+    data = request.get_json()
+    for user in users:
+        if user["id"] == user_id:
+            if "nome" in data:
+                user["nome"] = data["nome"]
+            if "email" in data:
+                user["email"] = data["email"]
+            return jsonify(user), 200
+    return jsonify({"error": "Usuário não encontrado"}), 404
 
-@app.route('/produtos', methods=['POST'])
-def adicionar_produto():
-    novo_produto = request.get_json()
-    produtos.append(novo_produto)
-    return jsonify({"mensagem": "Produto adicionado com sucesso!", "produto": novo_produto}), 201
 
-if __name__ == '__main__':
+@app.route("/users/<int:user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    for user in users:
+        if user["id"] == user_id:
+            users.remove(user)
+            return jsonify({"message": "Usuário excluído com sucesso"}), 200
+    return jsonify({"error": "Usuário não encontrado"}), 404
+
+
+if __name__ == "__main__":
     app.run(debug=True)
-
